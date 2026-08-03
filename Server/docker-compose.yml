@@ -1,0 +1,33 @@
+# IranCoJ Voice Relay — service definition.
+#
+# Bring up:   docker compose up -d --build
+# Logs:       docker compose logs -f          (shows the relay_pubkey line)
+# Stop:       docker compose down
+#
+# The relay needs:
+#   1. UDP port published (players connect here; the client auto-targets
+#      <gameServerIP>:VOICE_PORT).
+#   2. Read access to players.json (written by voice_extractor.py running in the
+#      game-server container/host). Mount it read-only.
+#   3. A persistent volume for its keypair so the pinned pubkey stays stable.
+services:
+  voice-relay:
+    build: .
+    image: irancoj-voice-relay:latest
+    container_name: coj-voice-relay
+    restart: unless-stopped
+    ports:
+      - "40000:40000/udp"
+    environment:
+      VOICE_PORT: "40000"
+      PLAYERS_JSON: "/data/players.json"
+      KEY_DIR: "/data/keys"
+    volumes:
+      # players.json produced by the extractor. Point the left side at wherever
+      # your extractor writes it (a shared volume from the game-server container).
+      - ./shared/players.json:/data/players.json:ro
+      # Persist the relay keypair (stable relay_pubkey across restarts).
+      - coj-voice-keys:/data/keys
+
+volumes:
+  coj-voice-keys:
