@@ -1,0 +1,137 @@
+IranCoJ Voice Chat for Call of Juarez: Bound in Blood
+Copyright (c) 2026 Roozbeh Ghazavi (IranCoJ). All rights reserved.
+
+================================================================================
+END-USER LICENSE AGREEMENT (EULA)
+================================================================================
+
+This is a legal agreement between you ("You") and the author, Roozbeh Ghazavi
+("the Author"), for the software known as "IranCoJ Voice Chat" — including the
+client component, the relay/server component, the extractor, and all associated
+files, sounds, documentation, and materials (collectively, the "Software").
+
+By downloading, installing, copying, or using the Software, You agree to be
+bound by this agreement. If You do not agree, do not download, install, or use
+the Software.
+
+--------------------------------------------------------------------------------
+1. GRANT OF LICENSE (WHAT YOU MAY DO)
+--------------------------------------------------------------------------------
+The Author grants You a personal, non-exclusive, non-transferable, revocable,
+royalty-free license to:
+
+   (a) Download and install the Software for personal, non-commercial use;
+   (b) Use the Software to play, or to host community servers for, the game
+       Call of Juarez: Bound in Blood;
+   (c) Run the Software on your own machines and community game servers.
+
+The Software is provided free of charge for community use.
+
+--------------------------------------------------------------------------------
+2. RESTRICTIONS (WHAT YOU MAY NOT DO)
+--------------------------------------------------------------------------------
+Except where a right is expressly granted above, You may NOT:
+
+   (a) Sell, rent, lease, sublicense, or otherwise commercially exploit the
+       Software or charge any fee for access to it;
+   (b) Modify, adapt, translate, or create derivative works of the Software;
+   (c) Reverse-engineer, decompile, or disassemble the Software, or attempt to
+       derive its source code, except to the limited extent this restriction is
+       expressly prohibited by applicable law;
+   (d) Redistribute, republish, re-host, or share copies of the Software, in
+       whole or in part, on any platform or by any means, without the Author's
+       prior written permission;
+   (e) Remove, alter, or obscure any copyright, trademark, or other proprietary
+       notices contained in the Software;
+   (f) Claim authorship of the Software or present it as your own work.
+
+--------------------------------------------------------------------------------
+3. REDISTRIBUTION BY PERMISSION
+--------------------------------------------------------------------------------
+If You wish to redistribute the Software (for example, to feature it on a mod
+site, bundle it with a server package, or mirror it), You must obtain the
+Author's prior written permission. The Author may grant such permission on
+reasonable conditions, such as keeping the Software unmodified, free of charge,
+and accompanied by this license and proper attribution.
+
+--------------------------------------------------------------------------------
+4. OWNERSHIP
+--------------------------------------------------------------------------------
+The Software is licensed, not sold. The Author retains all right, title, and
+interest in and to the Software, including all intellectual property rights.
+This agreement does not grant You any ownership of the Software.
+
+--------------------------------------------------------------------------------
+5. PRIVACY / VOICE DATA
+--------------------------------------------------------------------------------
+The Software transmits voice audio, in encrypted form, only to the game server
+You choose to connect to. The Author does not operate a central service, does
+not collect, store, or process your voice or personal data, and has no access to
+communications on servers operated by others. Server operators are responsible
+for their own servers.
+
+--------------------------------------------------------------------------------
+6. DISCLAIMER OF WARRANTY
+--------------------------------------------------------------------------------
+THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY OF ANY
+KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+THE AUTHOR DOES NOT WARRANT THAT THE SOFTWARE WILL BE ERROR-FREE, UNINTERRUPTED,
+SECURE, OR COMPATIBLE WITH ANY PARTICULAR HARDWARE, SOFTWARE, OR GAME VERSION.
+YOU INSTALL AND USE THE SOFTWARE AT YOUR OWN RISK.
+
+--------------------------------------------------------------------------------
+7. LIMITATION OF LIABILITY
+--------------------------------------------------------------------------------
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL THE AUTHOR
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR
+EXEMPLARY DAMAGES (INCLUDING BUT NOT LIMITED TO DAMAGE TO HARDWARE OR SOFTWARE,
+LOSS OF DATA, LOSS OF GAME PROGRESS, ACCOUNT ACTIONS BY THIRD PARTIES, OR
+BUSINESS INTERRUPTION) ARISING OUT OF OR IN ANY WAY RELATED TO YOUR USE OF, OR
+INABILITY TO USE, THE SOFTWARE, EVEN IF THE AUTHOR HAS BEEN ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGES.
+
+--------------------------------------------------------------------------------
+8. NO AFFILIATION
+--------------------------------------------------------------------------------
+This is an unofficial, fan-made modification. It is not affiliated with,
+endorsed by, or sponsored by the developers or publishers of Call of Juarez:
+Bound in Blood, or any other rights holder. All trademarks are the property of
+their respective owners. You are responsible for complying with the terms of
+service and rules of any game or server You use the Software with.
+
+--------------------------------------------------------------------------------
+9. THIRD-PARTY COMPONENTS
+--------------------------------------------------------------------------------
+The Software makes use of third-party open-source libraries, including the Opus
+audio codec and the libsodium cryptography library, which are distributed under
+their own respective licenses. Those licenses apply to those components and are
+acknowledged by the Author. This EULA governs only the Author's own work.
+
+--------------------------------------------------------------------------------
+10. TERMINATION
+--------------------------------------------------------------------------------
+This license is effective until terminated. It terminates automatically, without
+notice, if You breach any of its terms. Upon termination, You must stop using the
+Software and destroy all copies in your possession. The Author may also revoke
+this license at any time. Sections 4, 6, 7, 8, and 11 survive termination.
+
+--------------------------------------------------------------------------------
+11. GENERAL
+--------------------------------------------------------------------------------
+If any provision of this agreement is held to be unenforceable, the remaining
+provisions will remain in full force and effect. The Author's failure to enforce
+any right or provision of this agreement shall not be deemed a waiver of that
+right or provision. This agreement constitutes the entire agreement between You
+and the Author regarding the Software.
+
+--------------------------------------------------------------------------------
+12. CONTACT / PERMISSIONS
+--------------------------------------------------------------------------------
+For redistribution requests, permissions, or other inquiries, contact the Author
+through the IranCoJ community channels or the project's official repository.
+
+================================================================================
+By using the Software, You acknowledge that You have read this agreement,
+understand it, and agree to be bound by its terms.
+================================================================================

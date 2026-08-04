@@ -157,7 +157,7 @@ No. Voice goes only to the server you're playing on, encrypted the whole way. Th
 
 ## Credits & thanks
 
-Built by and for the Call of Juarez community, to bring one of the game's lost features back to life. Special thanks to everyone who tested across different countries and connections.
+Built by Thomas (Roozbeh) for the Call of Juarez community, to bring one of the game's lost features back to life. Special thanks to everyone who tested across different countries and connections.
 
 Saddle up and call out your shots, partner. 🤠
 
