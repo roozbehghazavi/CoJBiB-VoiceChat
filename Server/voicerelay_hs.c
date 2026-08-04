@@ -128,7 +128,7 @@ static int teamForName(const char* name) {
 }
 
 // Voice framing sizes (must match the client's VoiceHeader)
-#define HDR_LEN   15                                   // sizeof(VoiceHeader): 4+4+2+4+1
+/* HDR_LEN already defined above */
 #define NONCE_LEN crypto_aead_xchacha20poly1305_ietf_NPUBBYTES  // 24
 #define MAC_LEN   crypto_aead_xchacha20poly1305_ietf_ABYTES     // 16
 
@@ -307,23 +307,49 @@ int main(int argc, char** argv) {
                     if (crypto_aead_xchacha20poly1305_ietf_decrypt(
                         plain, &plainLen, NULL,
                         ct, ctLen, H, HDR_LEN, nonce, g_clients[idx].rx) == 0) {
-                        // Re-encrypt to every OTHER client that has keys.
-                        for (int i = 0;i < MAX_CLIENTS;i++) {
-                            if (!g_clients[i].active || i == idx || !g_clients[i].hasKeys) continue;
-                            unsigned char out[1 + HDR_LEN + NONCE_LEN + PKT_MAX + MAC_LEN];
-                            out[0] = PT_VOICE;
-                            memcpy(out + 1, H, HDR_LEN);                 // same header (cleartext, AAD)
-                            unsigned char* on = out + 1 + HDR_LEN;
-                            randombytes_buf(on, NONCE_LEN);            // fresh nonce per recipient
-                            unsigned char* oc = on + NONCE_LEN;
-                            unsigned long long oclen = 0;
-                            crypto_aead_xchacha20poly1305_ietf_encrypt(
-                                oc, &oclen, plain, plainLen, H, HDR_LEN, NULL, on, g_clients[i].tx);
-                            int total = 1 + HDR_LEN + NONCE_LEN + (int)oclen;
-                            sendto(s, (char*)out, total, 0, (struct sockaddr*)&g_clients[i].addr, sizeof(g_clients[i].addr));
+
+                        // --- anti-replay (seq is bytes 8..9 of the header) ---
+                        uint16_t seq = (uint16_t)(H[8] | (H[9] << 8));
+                        if (!replayCheck(&g_clients[idx], seq)) {
+                            // replayed/too-old -> drop
                         }
+                        else {
+                            // --- team routing ---
+                            // sender team by NAME (from players.json); all-talk flag bypasses filter.
+                            int senderTeam = teamForName(g_clients[idx].name);
+                            int teamMode = isTeamMode(g_mode);
+                            int allTalk = (H[HDR_FLAGS_OFF] & FLAG_ALLTALK) != 0;
+                            if (allTalk) teamMode = 0;                 // B: talk to everyone
+
+                            // AFK/unknown sender in a team mode talks to no one.
+                            if (teamMode && senderTeam != 1 && senderTeam != 2) {
+                                // dropped
+                            }
+                            else {
+                                // Re-encrypt to every OTHER client that has keys (subject to team rule).
+                                for (int i = 0;i < MAX_CLIENTS;i++) {
+                                    if (!g_clients[i].active || i == idx || !g_clients[i].hasKeys) continue;
+                                    if (teamMode) {
+                                        int rt = teamForName(g_clients[i].name);
+                                        if (rt != 1 && rt != 2) continue;      // AFK recipient hears nothing
+                                        if (rt != senderTeam) continue;    // different team -> skip
+                                    }
+                                    unsigned char out[1 + HDR_LEN + NONCE_LEN + PKT_MAX + MAC_LEN];
+                                    out[0] = PT_VOICE;
+                                    memcpy(out + 1, H, HDR_LEN);                 // same header (cleartext, AAD)
+                                    unsigned char* on = out + 1 + HDR_LEN;
+                                    randombytes_buf(on, NONCE_LEN);            // fresh nonce per recipient
+                                    unsigned char* oc = on + NONCE_LEN;
+                                    unsigned long long oclen = 0;
+                                    crypto_aead_xchacha20poly1305_ietf_encrypt(
+                                        oc, &oclen, plain, plainLen, H, HDR_LEN, NULL, on, g_clients[i].tx);
+                                    int total = 1 + HDR_LEN + NONCE_LEN + (int)oclen;
+                                    sendto(s, (char*)out, total, 0, (struct sockaddr*)&g_clients[i].addr, sizeof(g_clients[i].addr));
+                                }
+                            }  // end AFK-sender gate
+                        }  // end replay gate
                     }
-                    // else: auth failed (tampered/replayed/garbage) -> silently drop.
+                    // else: auth failed (tampered/garbage) -> silently drop.
                 }
             }
             // PT_HEARTBEAT: registration only (touchClient already did it).
