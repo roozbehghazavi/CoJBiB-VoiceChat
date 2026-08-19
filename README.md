@@ -1,14 +1,14 @@
-# Call of Juarez: Bound in Blood — Voice Chat Revival
+# Call of Juarez: Bound in Blood — Voice Chat Mod
 
-**Bring real in-game voice chat back to Call of Juarez: Bound in Blood — encrypted, team-aware, and dead simple for players to use.**
+**Bring real in-game voice chat to Call of Juarez: Bound in Blood — encrypted, team-aware, and dead simple for players to use.**
 
 ---
 
 ## What is this?
 
-Call of Juarez: Bound in Blood originally shipped with in-game voice chat, but it relied on Microsoft's old DirectPlay Voice and the long-dead GameSpy online service. On modern Windows, that system is gone — the voice feature has been broken for years.
+Call of Juarez: Bound in Blood originally shipped with in-game voice chat for consoles (PS3/Xbox 360) , but in pc version it was an unfinished feature and it relied on Microsoft's old DirectPlay Voice and the long-dead GameSpy online service. On modern Windows, that system is gone.
 
-This mod brings voice chat back, rebuilt from the ground up with modern technology. Hold a key, talk to your teammates, and actually coordinate again — just like the game was meant to be played. It works on today's Windows (7, 8, 10, 11), sounds clean, and requires almost nothing from players: **drop in one file and play.**
+This mod brings voice chat to pc just like console version, rebuilt from the ground up with modern technology. Hold a key, talk to your teammates, and actually coordinate again — just like the game was meant to be played. It works on today's Windows (7, 8, 10, 11), sounds clean, and requires almost nothing from players: **drop in one file and play.**
 
 Whether you're storming a town in Manhunt or dueling in Shootout, you can finally hear your posse.
 
@@ -36,18 +36,19 @@ Whether you're storming a town in Manhunt or dueling in Shootout, you can finall
 
 | Key | Action |
 |-----|--------|
-| **V** (hold) | Talk to your **team** |
-| **B** (hold) | Talk to **everyone** (all-talk) |
-| **M** (press) | Mute / unmute everyone else |
+| **F1** (hold) | Talk to your **team** |
+| **F2** (hold) | Talk to **everyone** (all-talk) |
+| **F3** (press) | Mute / unmute everyone else |
 
 In free-for-all modes (Shootout and Wanted) there are no teams, so **V** and **B** both talk to everyone.
 
 ### Installing (it's this easy)
 
-1. Download the voice chat file (`dinput8.dll`) and the included sound-effects folder.
+1. Download the voice chat files.
 2. Copy them into your Call of Juarez: Bound in Blood game folder (where the game's `.exe` is). The sounds go in the `CoJ2\Data\Sounds` folder that comes with the download.
-3. Launch the game and join a server that has voice enabled.
-4. Hold **V** and start talking!
+3. Customize your preferred keys in voiceconfig.ini and choose between PTT or toggle mode
+4. Launch the game and join a server that has voice enabled.
+5. Hold **F1** and start talking!
 
 That's it. No setup, no configuration, no account. The mod automatically figures out which server you joined and connects your voice for you. When you leave, it disconnects. When you join a different server, it follows along.
 
@@ -113,7 +114,7 @@ Each server automatically gets its own unique secure identity — you don't shar
 | **Wanted** (free-for-all) | **Everyone** hears everyone |
 | **Shootout** (free-for-all) | **Everyone** hears everyone |
 
-- The **all-talk** key (**B**) lets you reach everyone even in team modes.
+- The **all-talk** key lets you reach everyone even in team modes.
 - Players sitting in spectator/AFK don't hear or transmit team voice (so no accidental leaks).
 - Team changes are reflected almost instantly.
 
