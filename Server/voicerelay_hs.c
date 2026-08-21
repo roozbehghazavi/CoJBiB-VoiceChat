@@ -47,7 +47,7 @@
 #endif
 
 #define MAX_CLIENTS    32
-#define CLIENT_TIMEOUT 10
+#define CLIENT_TIMEOUT 30   // was 10; more margin for NAT rebind / packet loss
 #define PKT_MAX        2048
 
 #define PT_HEARTBEAT 0x00
@@ -111,21 +111,25 @@ static void loadTeamMap(void){
             char* c=strchr(t,':'); if(c) team=atoi(c+1);
         }
 
-        if(team==1||team==2){
-            strncpy(g_teamMap[newCount].name,nm,VNAME_MAX-1);
-            g_teamMap[newCount].name[VNAME_MAX-1]=0;
-            g_teamMap[newCount].team=team; newCount++;
-        }
+        // Add EVERY player with their real team number (0, 1, or 2). Team 0 is
+        // a first-class team: in Shootout everyone is team 0 and 0 must hear 0.
+        // (Only teams 1/2 exist in team modes; 0 there means genuinely AFK, and
+        //  AFK-hears-AFK is harmless.)
+        strncpy(g_teamMap[newCount].name,nm,VNAME_MAX-1);
+        g_teamMap[newCount].name[VNAME_MAX-1]=0;
+        g_teamMap[newCount].team=team; newCount++;
         p=q2+1;
     }
     g_teamCount=newCount; g_mode=newMode;
 }
 
-// team for a given player name; 0 if unknown/AFK.
+// team for a given player name. Returns the player's team (0/1/2) if found in
+// the scoreboard, or -1 if the name isn't in the scoreboard at all. The -1
+// sentinel lets routing distinguish "team 0" (a real team) from "unknown".
 static int teamForName(const char* name){
-    if(!name||!name[0]) return 0;
+    if(!name||!name[0]) return -1;
     for(int i=0;i<g_teamCount;i++) if(strcmp(g_teamMap[i].name,name)==0) return g_teamMap[i].team;
-    return 0;
+    return -1;
 }
 
 // Voice framing sizes (must match the client's VoiceHeader)
@@ -159,6 +163,13 @@ static int sameAddr(const struct sockaddr_in*a,const struct sockaddr_in*b){
 static int findClient(const struct sockaddr_in* from){
     for(int i=0;i<MAX_CLIENTS;i++)
         if(g_clients[i].active && sameAddr(&g_clients[i].addr,from)) return i;
+    return -1;
+}
+static int findByName(const char* name){
+    if(!name || !name[0]) return -1;
+    for(int i=0;i<MAX_CLIENTS;i++)
+        if(g_clients[i].active && g_clients[i].name[0] &&
+           strncmp(g_clients[i].name, name, VNAME_MAX)==0) return i;
     return -1;
 }
 static int touchClient(const struct sockaddr_in* from, time_t now){
@@ -272,9 +283,26 @@ int main(int argc,char**argv){
                     if(n>off){
                         int nl=buf[off]; off++;
                         if(nl>0 && nl<VNAME_MAX && off+nl<=n){
-                            memcpy(g_clients[idx].name, buf+off, nl);
-                            g_clients[idx].name[nl]=0;
-                            printf("[relay] slot %d name=\"%s\"\n", idx, g_clients[idx].name);
+                            char nm[VNAME_MAX];
+                            memcpy(nm, buf+off, nl); nm[nl]=0;
+
+                            // NAT-rebind handling: if this NAME already has an
+                            // active slot at a different address, that slot IS
+                            // this player -- their public port just changed.
+                            // Migrate: keep the existing slot, update its addr,
+                            // and release the just-allocated port-based slot so
+                            // we don't create a duplicate/flap.
+                            int prev = findByName(nm);
+                            if(prev>=0 && prev!=idx){
+                                g_clients[prev].addr    = from;    // follow new port
+                                g_clients[prev].lastSeen = now;
+                                g_clients[idx].active   = 0;       // drop the dup slot
+                                idx = prev;                        // continue as the real slot
+                                printf("[relay] slot %d addr updated (NAT rebind) name=\"%s\"\n", idx, nm);
+                            } else {
+                                memcpy(g_clients[idx].name, nm, nl+1);
+                                printf("[relay] slot %d name=\"%s\"\n", idx, g_clients[idx].name);
+                            }
                         }
                     }
                     // Relay makes an ephemeral session keypair for THIS handshake.
@@ -325,16 +353,20 @@ int main(int argc,char**argv){
                         int allTalk    = (H[HDR_FLAGS_OFF] & FLAG_ALLTALK) != 0;
                         if(allTalk) teamMode = 0;                 // B: talk to everyone
 
-                        // AFK/unknown sender in a team mode talks to no one.
-                        if(teamMode && senderTeam!=1 && senderTeam!=2){
-                            // dropped
+                        // Same-team routing: sender is heard by everyone on the
+                        // SAME team number, for ALL teams including 0 (Shootout:
+                        // everyone is team 0, so 0 hears 0). All-talk bypasses.
+                        // A sender not in the scoreboard (team -1) can't be
+                        // matched to a team, so in a team mode they reach no one.
+                        if(teamMode && senderTeam < 0){
+                            // unknown sender in a team mode talks to no one.
                         } else {
                         // Re-encrypt to every OTHER client that has keys (subject to team rule).
                         for(int i=0;i<MAX_CLIENTS;i++){
                             if(!g_clients[i].active || i==idx || !g_clients[i].hasKeys) continue;
                             if(teamMode){
                                 int rt = teamForName(g_clients[i].name);
-                                if(rt!=1 && rt!=2) continue;      // AFK recipient hears nothing
+                                if(rt < 0) continue;              // unknown recipient hears nothing
                                 if(rt != senderTeam) continue;    // different team -> skip
                             }
                             unsigned char out[1+HDR_LEN+NONCE_LEN+PKT_MAX+MAC_LEN];
