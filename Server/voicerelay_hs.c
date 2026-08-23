@@ -61,6 +61,11 @@
 #define FLAG_ALLTALK 0x01     // header flag: sender wants all-talk (skip team filter)
 #define HDR_FLAGS_OFF 14      // flags byte offset within VoiceHeader (magic4+id4+seq2+ts4)
 
+// Music virtual-sender id (matches client MUSIC_ID "MUSI"). Music frames are
+// injected with this in the header's clientId field and FLAG_ALLTALK set.
+#define MUSIC_ID 0x4D555349u
+#define VOICE_MAGIC 0x566A6F43u   // "CoJV" (matches client)
+
 // ---- Team map (server-authoritative, read from players.json) ----
 // We read the scoreboard's players.json and build name->team plus the mode id.
 // Identity is by PLAYER NAME (NAT-proof: players behind one IP have distinct
@@ -153,6 +158,11 @@ typedef struct {
 
 static Client g_clients[MAX_CLIENTS];
 
+#include "relay_music.h"
+#include <pthread.h>
+static SOCKET g_musicSock = INVALID_SOCKET;      // set in main, used by music cb
+static pthread_mutex_t g_clientsMtx = PTHREAD_MUTEX_INITIALIZER;
+
 // relay long-term keypair
 static unsigned char g_relayPk[crypto_kx_PUBLICKEYBYTES];
 static unsigned char g_relaySk[crypto_kx_SECRETKEYBYTES];
@@ -241,6 +251,40 @@ static int replayCheck(Client* c, uint16_t seq){
     return 0;
 }
 
+// Music fan-out: build a MUSIC_ID / all-talk voice header, then encrypt the
+// opus frame to every client with keys and send. Mirrors the voice fan-out but
+// the "sender" is the virtual music stream (bypasses team routing via all-talk).
+static void musicSend(const unsigned char* opus, int opusLen, uint16_t seq, uint32_t ts){
+    if(g_musicSock==INVALID_SOCKET) return;
+    unsigned char H[HDR_LEN];
+    // magic4 + id4 + seq2 + ts4 + flags1  (little-endian, matches client)
+    H[0]=(unsigned char)(VOICE_MAGIC);     H[1]=(unsigned char)(VOICE_MAGIC>>8);
+    H[2]=(unsigned char)(VOICE_MAGIC>>16); H[3]=(unsigned char)(VOICE_MAGIC>>24);
+    H[4]=(unsigned char)(MUSIC_ID);        H[5]=(unsigned char)(MUSIC_ID>>8);
+    H[6]=(unsigned char)(MUSIC_ID>>16);    H[7]=(unsigned char)(MUSIC_ID>>24);
+    H[8]=(unsigned char)(seq);             H[9]=(unsigned char)(seq>>8);
+    H[10]=(unsigned char)(ts);  H[11]=(unsigned char)(ts>>8);
+    H[12]=(unsigned char)(ts>>16); H[13]=(unsigned char)(ts>>24);
+    H[14]=FLAG_ALLTALK;
+
+    pthread_mutex_lock(&g_clientsMtx);
+    for(int i=0;i<MAX_CLIENTS;i++){
+        if(!g_clients[i].active || !g_clients[i].hasKeys) continue;
+        unsigned char out[1+HDR_LEN+NONCE_LEN+1024+MAC_LEN];
+        out[0]=PT_VOICE;
+        memcpy(out+1,H,HDR_LEN);
+        unsigned char* on=out+1+HDR_LEN;
+        randombytes_buf(on,NONCE_LEN);
+        unsigned char* oc=on+NONCE_LEN;
+        unsigned long long oclen=0;
+        crypto_aead_xchacha20poly1305_ietf_encrypt(
+            oc,&oclen, opus,(unsigned long long)opusLen, H,HDR_LEN, NULL, on, g_clients[i].tx);
+        int total=1+HDR_LEN+NONCE_LEN+(int)oclen;
+        sendto(g_musicSock,(char*)out,total,0,(struct sockaddr*)&g_clients[i].addr,sizeof(g_clients[i].addr));
+    }
+    pthread_mutex_unlock(&g_clientsMtx);
+}
+
 int main(int argc,char**argv){
     if(argc<2){ printf("Usage: %s <listenPort>\n",argv[0]); return 1; }
     int port=atoi(argv[1]);
@@ -263,6 +307,10 @@ int main(int argc,char**argv){
     local.sin_family=AF_INET; local.sin_addr.s_addr=htonl(INADDR_ANY); local.sin_port=htons((unsigned short)port);
     if(bind(s,(struct sockaddr*)&local,sizeof(local))!=0){ printf("bind failed %d\n",port); return 1; }
     printf("[relay] listening UDP %d\n",port); fflush(stdout);
+
+    // ---- start music streaming (MP3 -> Opus -> all clients) ----
+    g_musicSock = s;
+    music_start(musicSend, NULL, NULL);   // dir/cmd from env MUSIC_DIR / MUSIC_CMD or defaults
 
     unsigned char buf[PKT_MAX];
     time_t lastExpire=time(NULL);
@@ -362,6 +410,7 @@ int main(int argc,char**argv){
                             // unknown sender in a team mode talks to no one.
                         } else {
                         // Re-encrypt to every OTHER client that has keys (subject to team rule).
+                        pthread_mutex_lock(&g_clientsMtx);
                         for(int i=0;i<MAX_CLIENTS;i++){
                             if(!g_clients[i].active || i==idx || !g_clients[i].hasKeys) continue;
                             if(teamMode){
@@ -381,6 +430,7 @@ int main(int argc,char**argv){
                             int total = 1+HDR_LEN+NONCE_LEN+(int)oclen;
                             sendto(s,(char*)out,total,0,(struct sockaddr*)&g_clients[i].addr,sizeof(g_clients[i].addr));
                         }
+                        pthread_mutex_unlock(&g_clientsMtx);
                         }  // end AFK-sender gate
                         }  // end replay gate
                     }
