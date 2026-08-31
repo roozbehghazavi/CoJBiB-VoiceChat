@@ -27,6 +27,7 @@ static char  g_cur[512]  = "";      // currently-playing file path
 static int   g_play      = 0;       // 1 = playing
 static int   g_loopOne   = 0;       // repeat current file
 static int   g_folder    = 0;       // folder playlist mode
+static int   g_shuffle   = 0;       // random order within folder mode
 static int   g_skip      = 0;       // request skip
 static int   g_reload    = 0;       // request (re)open g_cur
 
@@ -124,7 +125,13 @@ static int nextInFolder(char* out, int cap){
     // find current basename
     const char* curb=strrchr(g_cur,'/'); curb=curb?curb+1:g_cur;
     int idx=-1; for(int i=0;i<cnt;i++) if(strcmp(names[i],curb)==0){ idx=i; break; }
-    int ni=(idx+1)%cnt;
+    int ni;
+    if(g_shuffle && cnt>1){
+        // pick a random track different from the current one
+        do { ni = rand()%cnt; } while(ni==idx);
+    } else {
+        ni=(idx+1)%cnt;                 // sequential (alphabetical) next, wraps
+    }
     snprintf(out,cap,"%s/%s",g_dir,names[ni]);
     return 1;
 }
@@ -150,7 +157,8 @@ static void pollCmd(void){
     pthread_mutex_lock(&mtx);
     if(strcasecmp(verb,"stop")==0){ g_play=0; }
     else if(strcasecmp(verb,"skip")==0){ g_skip=1; }
-    else if(strcasecmp(verb,"folder")==0){ g_folder=1; g_loopOne=0; g_play=1; g_cur[0]=0; g_skip=1; }
+    else if(strcasecmp(verb,"folder")==0){ g_folder=1; g_shuffle=0; g_loopOne=0; g_play=1; g_cur[0]=0; g_skip=1; }
+    else if(strcasecmp(verb,"shuffle")==0){ g_folder=1; g_shuffle=1; g_loopOne=0; g_play=1; g_cur[0]=0; g_skip=1; }
     else if(strcasecmp(verb,"loop")==0){
         // "loop <file>" loops that file; bare "loop" loops whatever is current.
         if(arg[0]) resolvePath(arg,g_cur,sizeof(g_cur));
@@ -242,6 +250,7 @@ static void* musicThread(void* _){
 }
 
 void music_start(music_send_fn send_cb, const char* musicDir, const char* cmdFile){
+    srand((unsigned)time(0));     // seed shuffle RNG
     g_send=send_cb;
     const char* e;
     if(musicDir && *musicDir) { strncpy(g_dir,musicDir,sizeof(g_dir)-1); }
